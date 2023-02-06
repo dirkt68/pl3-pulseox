@@ -1,2 +1,2 @@
 # Project Lab 3
-Digital Communications Project Lab
+## Digital Communications Project Lab
