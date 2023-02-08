@@ -1,6 +1,6 @@
 {
   "board": {
-    "active_layer": 0,
+    "active_layer": 44,
     "active_layer_preset": "",
     "auto_track_width": true,
     "hidden_netclasses": [],
@@ -63,11 +63,11 @@
       35,
       36
     ],
-    "visible_layers": "ffcfdff_ffffffff",
+    "visible_layers": "ffdffff_ffffffff",
     "zone_display_mode": 0
   },
   "meta": {
-    "filename": "pulse_ox_wearable.kicad_prl",
+    "filename": "IC_PCB_v2.kicad_prl",
     "version": 3
   },
   "project": {
