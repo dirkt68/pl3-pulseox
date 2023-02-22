@@ -2903,7 +2903,7 @@
     (uuid 3cf2ea9d-e6e3-43aa-b434-cc6707884258)
   )
   (text "Truth Table\nDTR RTS -> EN IO0\n 1   1      1   1 \n 0   0      1   1\n 1   0      0   1\n 0   1      1   0 "
-    (at 158.75 71.12 0)
+    (at 158.75 72.39 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 3f5b6474-74bb-41c3-bb2c-44d40a0c63bf)
   )

@@ -4,3 +4,7 @@ MAX30205 - body temperature chip
     https://www.mouser.com/ProductDetail/Maxim-Integrated/MAX30205MTA%2bT?qs=vgjKjNJexThp0Kgta53gGw%3D%3D
 ESP32-S3 - microcontroller
     https://www.mouser.com/ProductDetail/Espressif-Systems/ESP32-S3?qs=Rp5uXu7WBW%2FNWuUy%252BBihNw%3D%3D
+Cable
+    https://www.mouser.com/ProductDetail/Molex/15039-0701?qs=OlC7AqGiEDlOhqgJZI41Cw%3D%3D
+Connectors
+    https://www.mouser.com/ProductDetail/Molex/52207-0460?qs=3DzawVMofg%252B734N9HXUNVA%3D%3D
