@@ -1,0 +1,20 @@
+esp32 interrupts
+https://lastminuteengineers.com/handling-esp32-gpio-interrupts-tutorial/ 
+
+esp32 max30102
+https://microcontrollerslab.com/esp32-heart-rate-pulse-oximeter-max30102/#:~:text=Interfacing%20MAX30102%20Sensor%20with%20ESP32&text=We%20will%20use%20only%20four,to%20connect%20with%20our%20microcontroller.&text=Connect%20the%20default%20I2C%20pins,both%20grounds%20are%20in%20common.
+
+max30102 datasheet
+https://www.analog.com/media/en/technical-documentation/data-sheets/MAX30102.pdf
+
+esp32 max30205
+https://circuitdigest.com/microcontroller-projects/arduino-max30205-human-body-temperature-measurement
+
+wifi manager
+https://github.com/tzapu/WiFiManager
+
+firebase stuff
+https://github.com/mobizt/Firebase-ESP32
+
+screen
+https://dronebotworkshop.com/gc9a01/

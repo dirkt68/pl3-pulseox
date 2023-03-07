@@ -1,9 +1,6 @@
 {
 	"folders": [
 		{
-			"path": "../../../microprocessor-architecture/project_2/project_2.srcs"
-		},
-		{
 			"name": "main-esp32-code",
 			"path": "."
 		}

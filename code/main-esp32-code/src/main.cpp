@@ -187,6 +187,7 @@ void loop(){
         // advance the queue
         pulseOxSensor.nextSample();
     }
+    
     // take reading for pulse ox
     maxim_heart_rate_and_oxygen_saturation(irLEDBuf,
                                            POBufferSize,
@@ -225,9 +226,8 @@ void loop(){
     }
     else if (WiFi.status() == WL_CONNECTED) {
         //TODO: send data over wifi to firebase server
-        if (millis() - firebaseTimer > WIFI_TIMER){
+        if (millis() - firebaseTimer > WIFI_TIMER){ // sends data every 30 seconds
             firebaseTimer = millis();
-
         }
     }
 
