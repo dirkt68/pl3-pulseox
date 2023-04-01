@@ -33,11 +33,10 @@
 #define API_KEY "AIzaSyDrjThqfnejA6Lc12Lwnbxfnrqdf2X1TZ0"
 #define DB_URL "https://console.firebase.google.com/project/project-lab-3-45cf8/database/project-lab-3-45cf8-default-rtdb/data/~2F"
 
-#define USER_EMAIL ""
-#define USER_PASS ""
-
 /*------------------------------- GLOBALS ---------------------------------*/
 bool wifi_enabled = false;
+bool firebase_enabled = false;
+
 TFT_eSPI tft;
 MAX30205 tempSensor;
 MAX30105 pulseOxSensor;
@@ -79,7 +78,6 @@ double temp_CtoF(double tempC) {
     return (tempC * (9 / 5)) + 32;
 }
 
-
 /* setup wifi when triggered */
 void wifi_setup() {
     wifi_enabled = false;
@@ -99,6 +97,12 @@ void wifi_setup() {
         }
     #endif
 
+    if (Firebase.signUp(&config, &auth, "", "")) {
+        firebase_enabled = true;
+    }
+
+    Firebase.begin(&config, &auth);
+
     #ifdef SCREEN_CONN
         //TODO: TURN OFF WIFI SYMBOL
     #endif
@@ -114,6 +118,10 @@ void setup() {
         Serial.begin(115200);
     #endif
     
+    /*------------------------------- FIREBASE SETUP ---------------------------------*/
+    config.api_key = API_KEY;
+    config.database_url = DB_URL;
+
     /*------------------------------- SCREEN SETUP ---------------------------------*/
     #ifdef SCREEN_CONN
         tft.begin();
@@ -226,8 +234,12 @@ void loop(){
     }
     else if (WiFi.status() == WL_CONNECTED) {
         //TODO: send data over wifi to firebase server
-        if (millis() - firebaseTimer > WIFI_TIMER){ // sends data every 30 seconds
+        if (millis() - firebaseTimer > WIFI_TIMER && Firebase.ready() && firebase_enabled) { // sends data every 30 seconds
             firebaseTimer = millis();
+            
+            Firebase.RTDB.setIntAsync(&FBDO, "mainData/heart_rate", heartRate);
+            Firebase.RTDB.setIntAsync(&FBDO, "mainData/spo2", spo2);
+            Firebase.RTDB.setFloatAsync(&FBDO, "mainData/body_temp", temperature);
         }
     }
 
