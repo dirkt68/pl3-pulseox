@@ -9,6 +9,7 @@
 // libraries for SPO2 sensor
 #include "MAX30105.h"
 #include "spo2_algorithm.h"
+#include "heartRate.h"
 
 // libraries for temp. sensor
 #include "Protocentral_MAX30205.h"
@@ -31,7 +32,10 @@
 
 // define stuff to log in to firebase
 #define API_KEY "AIzaSyDrjThqfnejA6Lc12Lwnbxfnrqdf2X1TZ0"
-#define DB_URL "https://console.firebase.google.com/project/project-lab-3-45cf8/database/project-lab-3-45cf8-default-rtdb/data/~2F"
+#define DB_URL "https://project-lab-3-45cf8-default-rtdb.firebaseio.com"
+
+#define I2C_SDA_CUSTOM 18
+#define I2C_SCL_CUSTOM 19
 
 /*------------------------------- GLOBALS ---------------------------------*/
 bool wifi_enabled = false;
@@ -43,12 +47,21 @@ MAX30105 pulseOxSensor;
 
 /* PULSE OX VARIABLES */
 const uint8_t POBufferSize = 100;
+const uint8_t RATE_SIZE = 4;
+
 uint32_t irLEDBuf[POBufferSize];
 uint32_t redLEDBuf[POBufferSize];
+
 int32_t spo2;
 int8_t validSPO2;
-int32_t heartRate;
+
+int32_t heartRateDummy;
 int8_t validHeartRate;
+uint32_t heartRateTrue;
+uint32_t heartRateAvg;
+
+uint32_t rate_cache[RATE_SIZE];
+uint8_t currRateIDX = 0;
 
 /* TEMPERATURE VARIABLES */
 double temperature;
@@ -59,7 +72,8 @@ FirebaseAuth auth;
 FirebaseConfig config;
 
 /* TIMING VARIABLES */
-uint64_t firebaseTimer = millis();
+uint64_t firebaseTimer = 0;
+uint64_t lastHeartbeat = 0;
 
 
 /*------------------------------- INTERRUPT SERVICE ROUTINE ---------------------------------*/
@@ -89,6 +103,7 @@ void wifi_setup() {
     // connect to the wifi using Wifi Manager
     WiFiManager wm;
     wm.setClass("invert");
+    wm.resetSettings(); // for now input wifi every time
     bool result = wm.autoConnect("LifeMTR");
 
     #ifdef DEBUG
@@ -121,6 +136,7 @@ void setup() {
     /*------------------------------- FIREBASE SETUP ---------------------------------*/
     config.api_key = API_KEY;
     config.database_url = DB_URL;
+    config.token_status_callback = tokenStatusCallback;
 
     /*------------------------------- SCREEN SETUP ---------------------------------*/
     #ifdef SCREEN_CONN
@@ -164,7 +180,7 @@ void setup() {
                                            redLEDBuf,
                                            &spo2,
                                            &validSPO2,
-                                           &heartRate,
+                                           &heartRateDummy,
                                            &validHeartRate);
 
     // setup wifi button to trigger interrupt
@@ -174,13 +190,13 @@ void setup() {
     //TODO: TURN OFF BOOT LOGO
 }
 
+/*------------------------------- MAIN CODE LOOP ---------------------------------*/
 void loop(){
-    /*------------------------------- MAIN CODE LOOP ---------------------------------*/
     /* DO PULSE OX MEASUREMENT */
     // keep the latest 75 samples
     for (uint8_t i = 25; i < POBufferSize; i++){
         irLEDBuf[i - 25] = irLEDBuf[i];
-        redLEDBuf[i - 25] = irLEDBuf[i];
+        redLEDBuf[i - 25] = redLEDBuf[i];
     }
 
     // take a new 25 samples
@@ -194,35 +210,51 @@ void loop(){
         irLEDBuf[i] = pulseOxSensor.getIR();
         // advance the queue
         pulseOxSensor.nextSample();
+
+        // get heart rate
+        if (checkForBeat(irLEDBuf[i])) {
+            uint64_t delta = millis() - lastHeartbeat;
+            lastHeartbeat = millis();
+
+            heartRateTrue = 60 / (delta / 1000);
+
+            if (heartRateTrue < 300 && heartRateTrue > 20) {
+                rate_cache[currRateIDX++] = heartRateTrue;
+                currRateIDX %= RATE_SIZE;
+
+                heartRateAvg = 0;
+                for (uint8_t i = 0; i < RATE_SIZE; i++){
+                    heartRateAvg += rate_cache[i];
+                }
+                heartRateAvg /= RATE_SIZE;
+            }
+        }
     }
     
-    // take reading for pulse ox
+    // take reading for oximeter, ignore heart rate
     maxim_heart_rate_and_oxygen_saturation(irLEDBuf,
                                            POBufferSize,
                                            redLEDBuf,
                                            &spo2,
                                            &validSPO2,
-                                           &heartRate,
+                                           &heartRateDummy,
                                            &validHeartRate);
 
     // take reading for temperature
-    temperature = temp_CtoF(tempSensor.getTemperature());
+    // temperature = temp_CtoF(tempSensor.getTemperature());
 
     #ifdef DEBUG
-        Serial.print(F("Heart Rate Valid? -> "));
-        Serial.println(F(validHeartRate));
+        Serial.print(("Heart Rate True -> "));
+        Serial.println((heartRateDummy));
 
-        Serial.print(F("Heart Rate -> "));
-        Serial.println(F(heartRate));
+        Serial.print(("Heart Rate Avg -> "));
+        Serial.println((heartRateAvg));
 
-        Serial.print(F("SPO2 Valid? -> "));
-        Serial.println(F(validSPO2));
+        Serial.print(("SPO2 -> "));
+        Serial.println((spo2));
 
-        Serial.print(F("SPO2 -> "));
-        Serial.println(F(spo2));
-
-        Serial.print(F("Temp. -> "));
-        Serial.println(temperature);
+        // Serial.print(("Temp. -> "));
+        // Serial.println(temperature);
     #endif
 
     #ifdef SCREEN_CONN
@@ -232,17 +264,14 @@ void loop(){
     if (wifi_enabled && WiFi.status() != WL_CONNECTED) {
         wifi_setup();
     }
-    else if (WiFi.status() == WL_CONNECTED) {
-        //TODO: send data over wifi to firebase server
-        if (millis() - firebaseTimer > WIFI_TIMER && Firebase.ready() && firebase_enabled) { // sends data every 30 seconds
-            firebaseTimer = millis();
+    else if (WiFi.status() == WL_CONNECTED && millis() - firebaseTimer > WIFI_TIMER && Firebase.ready() && firebase_enabled) {
+        firebaseTimer = millis();
             
-            Firebase.RTDB.setIntAsync(&FBDO, "mainData/heart_rate", heartRate);
-            Firebase.RTDB.setIntAsync(&FBDO, "mainData/spo2", spo2);
-            Firebase.RTDB.setFloatAsync(&FBDO, "mainData/body_temp", temperature);
-        }
+        Firebase.RTDB.setIntAsync(&FBDO, "mainData/heart_rate", heartRateDummy);
+        Firebase.RTDB.setIntAsync(&FBDO, "mainData/spo2", spo2);
+        Firebase.RTDB.setFloatAsync(&FBDO, "mainData/body_temp", temperature);
     }
 
     // delay after read
-    sleep(1);
+    
 }

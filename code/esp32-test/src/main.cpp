@@ -10,7 +10,7 @@
 
 // define stuff to log in to firebase
 #define API_KEY "AIzaSyDrjThqfnejA6Lc12Lwnbxfnrqdf2X1TZ0"
-#define DB_URL "https://console.firebase.google.com/project/project-lab-3-45cf8/database/project-lab-3-45cf8-default-rtdb/data/~2F"
+#define DB_URL "https://project-lab-3-45cf8-default-rtdb.firebaseio.com"
 
 /*------------------------------- GLOBALS ---------------------------------*/
 bool wifi_enabled = false;
@@ -44,6 +44,10 @@ void wifi_setup() {
 
     Serial.println("activating Firebase");
 
+    config.api_key = API_KEY;
+    config.database_url = DB_URL;
+    config.token_status_callback = tokenStatusCallback;
+
     if (Firebase.signUp(&config, &auth, "", "")) {
         firebase_enabled = true;
     }
@@ -65,10 +69,14 @@ void setup() {
 }
 
 void loop() {
-    Serial.println("Testing");
-    delay(1);
-
-    Firebase.RTDB.setIntAsync(&FBDO, "mainData/heart_rate", 10);
-    Firebase.RTDB.setIntAsync(&FBDO, "mainData/spo2", 20);
-    Firebase.RTDB.setFloatAsync(&FBDO, "mainData/body_temp", 30);
+    if (firebase_enabled && Firebase.ready()){
+        // Serial.println("firebase conn.");
+        Firebase.RTDB.setIntAsync(&FBDO, "mainData/heart_rate", 100);
+        Firebase.RTDB.setIntAsync(&FBDO, "mainData/spo2", 200);
+        Firebase.RTDB.setFloatAsync(&FBDO, "mainData/body_temp", 300);
+    }
+    else{
+        Serial.println("firebase not conn.");
+    }
+    delay(10 * 1000);
 }
