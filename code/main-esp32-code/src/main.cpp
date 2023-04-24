@@ -3,8 +3,7 @@
 #include "SPI.h"  // SPI library
 #include "Wire.h" // i2c library
 
-#include "TFT_eSPI.h" // library for screen control
-#include "TFT_eWidget.h" // library for nice looking widgets
+#include <display_code.h>
 
 // libraries for SPO2 sensor
 #include "MAX30105.h"
@@ -22,13 +21,12 @@
 #include <addons/TokenHelper.h>
 #include <addons/RTDBHelper.h>
 
-
 /*------------------------------- DEFINES ---------------------------------*/
 #define DEBUG // when available, print debug information to the screen
-#define SCREEN_CONN // when no screen attached, disable screen function calls
+// #define SCREEN_CONN // when no screen attached, disable screen function calls
 
-#define BUTTON 39 // pin connected to wifi connection button
-#define WIFI_TIMER 30000 // every 30 seconds, send wifi info
+#define BUTTON 39        // pin connected to wifi connection button
+#define WIFI_TIMER 10000 // every 30 seconds, send wifi info
 
 // define stuff to log in to firebase
 #define API_KEY "AIzaSyDrjThqfnejA6Lc12Lwnbxfnrqdf2X1TZ0"
@@ -41,7 +39,8 @@
 bool wifi_enabled = false;
 bool firebase_enabled = false;
 
-TFT_eSPI tft;
+TFT_eSPI tft = TFT_eSPI();
+
 MAX30205 tempSensor;
 MAX30105 pulseOxSensor;
 
@@ -75,30 +74,32 @@ FirebaseConfig config;
 uint64_t firebaseTimer = 0;
 uint64_t lastHeartbeat = 0;
 
-
 /*------------------------------- INTERRUPT SERVICE ROUTINE ---------------------------------*/
 /* interrupt handler for the button */
-void IRAM_ATTR ISR() {
+void IRAM_ATTR ISR()
+{
     // only connect to wifi if not already connected
-    if (WiFi.status() != WL_CONNECTED) {
+    if (WiFi.status() != WL_CONNECTED)
+    {
         wifi_enabled = true;
     }
 }
 
-
 /*------------------------------- HELPER FUNCTIONS ---------------------------------*/
 /* convert temperature from celsius to fahrenheit */
-double temp_CtoF(double tempC) {
+double temp_CtoF(double tempC)
+{
     return (tempC * (9 / 5)) + 32;
 }
 
 /* setup wifi when triggered */
-void wifi_setup() {
+void wifi_setup()
+{
     wifi_enabled = false;
 
-    #ifdef SCREEN_CONN
-        //TODO: DISPLAY WIFI SYMBOL
-    #endif
+#ifdef SCREEN_CONN
+    tft.pushImage(0, 60, 240, 120, WiFi120);
+#endif
 
     // connect to the wifi using Wifi Manager
     WiFiManager wm;
@@ -106,64 +107,69 @@ void wifi_setup() {
     wm.resetSettings(); // for now input wifi every time
     bool result = wm.autoConnect("LifeMTR");
 
-    #ifdef DEBUG
-        if (!result){
-            Serial.println("Couldn't connect to wifi");
-        }
-    #endif
+#ifdef DEBUG
+    if (!result)
+    {
+        Serial.println("Couldn't connect to wifi");
+    }
+#endif
 
-    if (Firebase.signUp(&config, &auth, "", "")) {
+    if (Firebase.signUp(&config, &auth, "", ""))
+    {
         firebase_enabled = true;
     }
 
     Firebase.begin(&config, &auth);
 
-    #ifdef SCREEN_CONN
-        //TODO: TURN OFF WIFI SYMBOL
-    #endif
+#ifdef SCREEN_CONN
+    tft.fillScreen(TFT_WHITE);
+#endif
 }
 
-
 /*------------------------------- INITIAL SETUP ---------------------------------*/
-void setup() {
+void setup()
+{
     // sleep to allow all devices to turn on
     sleep(1);
-    #ifdef DEBUG
-        // while testing, use the serial port to print info
-        Serial.begin(115200);
-    #endif
-    
+#ifdef DEBUG
+    // while testing, use the serial port to print info
+    Serial.begin(115200);
+#endif
+
     /*------------------------------- FIREBASE SETUP ---------------------------------*/
     config.api_key = API_KEY;
     config.database_url = DB_URL;
     config.token_status_callback = tokenStatusCallback;
 
-    /*------------------------------- SCREEN SETUP ---------------------------------*/
-    #ifdef SCREEN_CONN
-        tft.begin();
-        tft.fillScreen(TFT_BLACK);
-        //TODO: ADD BOOT LOGO
-    #endif
+/*------------------------------- SCREEN SETUP ---------------------------------*/
+#ifdef SCREEN_CONN
+    tft.begin();
+    tft.setRotation(0);
+    tft.setSwapBytes(false);
+    tft.setTextSize(3);
+#endif
 
     /*------------------------------- SENSOR SETUP ---------------------------------*/
     // initialize temp sensor
-    tempSensor.begin();
+    // tempSensor.begin();
 
     // initialize pulse ox sensor
     pulseOxSensor.begin(Wire, I2C_SPEED_FAST);
     // recommended values to run the device at
     uint8_t ledBrightness = 60;
     uint8_t sampleAverage = 4;
-    uint8_t ledMode = 2;
+    uint8_t ledMode = 3;
     uint8_t sampleRate = 100;
     uint16_t pulseWidth = 411;
     uint16_t adcRange = 4096;
     pulseOxSensor.setup(ledBrightness, sampleAverage, ledMode, sampleRate, pulseWidth, adcRange);
 
     // perform a full pulse ox reading
-    for (uint8_t i = 0; i < POBufferSize; i++){
+    for (uint8_t i = 0; i < POBufferSize; i++)
+    {
         // wait for a reading
-        while(!pulseOxSensor.available()) {
+        while (!pulseOxSensor.available())
+        {
             pulseOxSensor.check();
         }
 
@@ -187,21 +193,27 @@ void setup() {
     pinMode(BUTTON, INPUT_PULLUP);
     attachInterrupt(BUTTON, ISR, FALLING);
 
-    //TODO: TURN OFF BOOT LOGO
+#ifdef SCREEN_CONN
+    tft.fillScreen(TFT_WHITE);
+#endif
 }
 
 /*------------------------------- MAIN CODE LOOP ---------------------------------*/
-void loop(){
+void loop()
+{
     /* DO PULSE OX MEASUREMENT */
     // keep the latest 75 samples
-    for (uint8_t i = 25; i < POBufferSize; i++){
+    for (uint8_t i = 25; i < POBufferSize; i++)
+    {
         irLEDBuf[i - 25] = irLEDBuf[i];
         redLEDBuf[i - 25] = redLEDBuf[i];
     }
 
     // take a new 25 samples
-    for (uint8_t i = 75; i < POBufferSize; i++){
-        while(!pulseOxSensor.available()) {
+    for (uint8_t i = 75; i < POBufferSize; i++)
+    {
+        while (!pulseOxSensor.available())
+        {
             pulseOxSensor.check();
         }
 
@@ -212,25 +224,28 @@ void loop(){
         pulseOxSensor.nextSample();
 
         // get heart rate
-        if (checkForBeat(irLEDBuf[i])) {
+        if (checkForBeat(irLEDBuf[i]))
+        {
             uint64_t delta = millis() - lastHeartbeat;
             lastHeartbeat = millis();
 
             heartRateTrue = 60 / (delta / 1000);
 
-            if (heartRateTrue < 300 && heartRateTrue > 20) {
+            if (heartRateTrue < 300 && heartRateTrue > 20)
+            {
                 rate_cache[currRateIDX++] = heartRateTrue;
                 currRateIDX %= RATE_SIZE;
 
                 heartRateAvg = 0;
-                for (uint8_t i = 0; i < RATE_SIZE; i++){
+                for (uint8_t i = 0; i < RATE_SIZE; i++)
+                {
                     heartRateAvg += rate_cache[i];
                 }
                 heartRateAvg /= RATE_SIZE;
             }
         }
     }
-    
+
     // take reading for oximeter, ignore heart rate
     maxim_heart_rate_and_oxygen_saturation(irLEDBuf,
                                            POBufferSize,
@@ -243,35 +258,60 @@ void loop(){
     // take reading for temperature
     // temperature = temp_CtoF(tempSensor.getTemperature());
 
-    #ifdef DEBUG
-        Serial.print(("Heart Rate True -> "));
-        Serial.println((heartRateDummy));
+#ifdef DEBUG
+    Serial.print(("Heart Rate True -> "));
+    Serial.println((heartRateDummy));
 
-        Serial.print(("Heart Rate Avg -> "));
-        Serial.println((heartRateAvg));
+    Serial.print(("Heart Rate Avg -> "));
+    Serial.println((heartRateAvg));
 
-        Serial.print(("SPO2 -> "));
-        Serial.println((spo2));
+    Serial.print(("SPO2 -> "));
+    Serial.println((spo2));
 
-        // Serial.print(("Temp. -> "));
-        // Serial.println(temperature);
-    #endif
+    // Serial.print(("Temp. -> "));
+    // Serial.println(temperature);
+#endif
 
-    #ifdef SCREEN_CONN
-        //TODO: PUSH INFO TO SCREEN
-    #endif
+#ifdef SCREEN_CONN
+    char hrB[10];
+    itoa(heartRateAvg, hrB, 10);
 
-    if (wifi_enabled && WiFi.status() != WL_CONNECTED) {
+    char oxiB[10];
+    itoa(spo2, oxiB, 10);
+
+    char tempB[10];
+    dtostrf(temperature, 4, 2, tempB);
+
+    tft.setCursor(60, 90);
+    tft.setTextColor(TFT_RED);
+    tft.print(hrB);
+
+    tft.setCursor(60, 120);
+    tft.setTextColor(TFT_BLUE);
+    tft.print(oxiB);
+
+    tft.setCursor(60, 150);
+    tft.setTextColor(TFT_BLACK);
+    tft.print(tempB);
+#endif
+
+    if (wifi_enabled && WiFi.status() != WL_CONNECTED)
+    {
         wifi_setup();
     }
-    else if (WiFi.status() == WL_CONNECTED && millis() - firebaseTimer > WIFI_TIMER && Firebase.ready() && firebase_enabled) {
+    else if (WiFi.status() == WL_CONNECTED && millis() - firebaseTimer > WIFI_TIMER && Firebase.ready() && firebase_enabled)
+    {
+
+#ifdef DEBUG
+        Serial.println("Sending to Firebase");
+#endif
+
         firebaseTimer = millis();
-            
+
         Firebase.RTDB.setIntAsync(&FBDO, "mainData/heart_rate", heartRateDummy);
+        sleep(.5);
         Firebase.RTDB.setIntAsync(&FBDO, "mainData/spo2", spo2);
+        sleep(.5);
         Firebase.RTDB.setFloatAsync(&FBDO, "mainData/body_temp", temperature);
     }
-
-    // delay after read
-    
 }
