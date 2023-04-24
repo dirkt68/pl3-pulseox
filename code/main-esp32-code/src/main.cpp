@@ -32,8 +32,9 @@
 #define API_KEY "AIzaSyDrjThqfnejA6Lc12Lwnbxfnrqdf2X1TZ0"
 #define DB_URL "https://project-lab-3-45cf8-default-rtdb.firebaseio.com"
 
-#define I2C_SDA_CUSTOM 18
-#define I2C_SCL_CUSTOM 19
+#define I2C_CUSTOM_SCL 19
+#define I2C_CUSTOM_SDA 21
+
 
 /*------------------------------- GLOBALS ---------------------------------*/
 bool wifi_enabled = false;
@@ -89,7 +90,7 @@ void IRAM_ATTR ISR()
 /* convert temperature from celsius to fahrenheit */
 double temp_CtoF(double tempC)
 {
-    return (tempC * (9 / 5)) + 32;
+    return (tempC * 1.8) + 32;
 }
 
 /* setup wifi when triggered */
@@ -133,6 +134,7 @@ void setup()
 {
     // sleep to allow all devices to turn on
     sleep(1);
+    Wire.begin(I2C_CUSTOM_SDA, I2C_CUSTOM_SCL, I2C_SPEED_FAST);
 #ifdef DEBUG
     // while testing, use the serial port to print info
     Serial.begin(115200);
@@ -149,13 +151,13 @@ void setup()
     tft.setRotation(0);
     tft.setSwapBytes(true);
     tft.fillScreen(TFT_WHITE);
-    tft.pushImage(60, 60, 120, 120, RLifeMTR);
+    tft.pushImage(60, 60, 120, 120, LifeMTR);
     delay(2000);
 #endif
 
     /*------------------------------- SENSOR SETUP ---------------------------------*/
     // initialize temp sensor
-    // tempSensor.begin();
+    tempSensor.begin();
 
     // initialize pulse ox sensor
     pulseOxSensor.begin(Wire, I2C_SPEED_FAST);
@@ -226,28 +228,6 @@ void loop()
         irLEDBuf[i] = pulseOxSensor.getIR();
         // advance the queue
         pulseOxSensor.nextSample();
-
-        // get heart rate
-        if (checkForBeat(irLEDBuf[i]))
-        {
-            uint64_t delta = millis() - lastHeartbeat;
-            lastHeartbeat = millis();
-
-            heartRateTrue = 60 / (delta / 1000);
-
-            if (heartRateTrue < 300 && heartRateTrue > 20)
-            {
-                rate_cache[currRateIDX++] = heartRateTrue;
-                currRateIDX %= RATE_SIZE;
-
-                heartRateAvg = 0;
-                for (uint8_t i = 0; i < RATE_SIZE; i++)
-                {
-                    heartRateAvg += rate_cache[i];
-                }
-                heartRateAvg /= RATE_SIZE;
-            }
-        }
     }
 
     // take reading for oximeter, ignore heart rate
@@ -260,7 +240,7 @@ void loop()
                                            &validHeartRate);
 
     // take reading for temperature
-    // temperature = temp_CtoF(tempSensor.getTemperature());
+    temperature = temp_CtoF(tempSensor.getTemperature());
 
 #ifdef DEBUG
     Serial.print(("Heart Rate True -> "));
@@ -272,8 +252,8 @@ void loop()
     Serial.print(("SPO2 -> "));
     Serial.println((spo2));
 
-    // Serial.print(("Temp. -> "));
-    // Serial.println(temperature);
+    Serial.print(("Temp. -> "));
+    Serial.println(temperature);
 #endif
 
 #ifdef SCREEN_CONN
