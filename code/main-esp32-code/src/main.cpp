@@ -98,7 +98,9 @@ void wifi_setup()
     wifi_enabled = false;
 
 #ifdef SCREEN_CONN
-    tft.pushImage(0, 60, 240, 120, WiFi120);
+    tft.setSwapBytes(true);
+    tft.fillScreen(TFT_WHITE);
+    tft.pushImage(60, 60, 120, 120, BWiFi120);
 #endif
 
     // connect to the wifi using Wifi Manager
@@ -145,8 +147,10 @@ void setup()
 #ifdef SCREEN_CONN
     tft.begin();
     tft.setRotation(0);
-    tft.setSwapBytes(false);
-    tft.setTextSize(3);
+    tft.setSwapBytes(true);
+    tft.fillScreen(TFT_WHITE);
+    tft.pushImage(60, 60, 120, 120, RLifeMTR);
+    delay(2000);
 #endif
 
     /*------------------------------- SENSOR SETUP ---------------------------------*/
@@ -273,6 +277,10 @@ void loop()
 #endif
 
 #ifdef SCREEN_CONN
+    tft.setSwapBytes(false);
+    tft.setTextSize(3);
+    tft.fillScreen(TFT_WHITE);
+
     char hrB[10];
     itoa(heartRateAvg, hrB, 10);
 
@@ -282,16 +290,22 @@ void loop()
     char tempB[10];
     dtostrf(temperature, 4, 2, tempB);
 
-    tft.setCursor(60, 90);
+    tft.setCursor(65, 85);
     tft.setTextColor(TFT_RED);
+    tft.print("HR:");
+    tft.setCursor(115, 85);
     tft.print(hrB);
 
-    tft.setCursor(60, 120);
+    tft.setCursor(65, 115);
     tft.setTextColor(TFT_BLUE);
+    tft.print("OX:");
+    tft.setCursor(115, 115);
     tft.print(oxiB);
 
-    tft.setCursor(60, 150);
+    tft.setCursor(65, 145);
     tft.setTextColor(TFT_BLACK);
+    tft.print("TF:");
+    tft.setCursor(115, 145);
     tft.print(tempB);
 #endif
 
