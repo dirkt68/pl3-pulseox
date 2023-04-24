@@ -23,7 +23,7 @@
 
 /*------------------------------- DEFINES ---------------------------------*/
 #define DEBUG // when available, print debug information to the screen
-// #define SCREEN_CONN // when no screen attached, disable screen function calls
+#define SCREEN_CONN // when no screen attached, disable screen function calls
 
 #define BUTTON 39        // pin connected to wifi connection button
 #define WIFI_TIMER 10000 // every 30 seconds, send wifi info
@@ -37,7 +37,7 @@
 
 
 /*------------------------------- GLOBALS ---------------------------------*/
-bool wifi_enabled = false;
+bool wifi_enabled = true;
 bool firebase_enabled = false;
 
 TFT_eSPI tft = TFT_eSPI();
@@ -55,13 +55,8 @@ uint32_t redLEDBuf[POBufferSize];
 int32_t spo2;
 int8_t validSPO2;
 
-int32_t heartRateDummy;
+int32_t heartRate;
 int8_t validHeartRate;
-uint32_t heartRateTrue;
-uint32_t heartRateAvg;
-
-uint32_t rate_cache[RATE_SIZE];
-uint8_t currRateIDX = 0;
 
 /* TEMPERATURE VARIABLES */
 double temperature;
@@ -73,7 +68,6 @@ FirebaseConfig config;
 
 /* TIMING VARIABLES */
 uint64_t firebaseTimer = 0;
-uint64_t lastHeartbeat = 0;
 
 /*------------------------------- INTERRUPT SERVICE ROUTINE ---------------------------------*/
 /* interrupt handler for the button */
@@ -152,7 +146,6 @@ void setup()
     tft.setSwapBytes(true);
     tft.fillScreen(TFT_WHITE);
     tft.pushImage(60, 60, 120, 120, LifeMTR);
-    delay(2000);
 #endif
 
     /*------------------------------- SENSOR SETUP ---------------------------------*/
@@ -192,7 +185,7 @@ void setup()
                                            redLEDBuf,
                                            &spo2,
                                            &validSPO2,
-                                           &heartRateDummy,
+                                           &heartRate,
                                            &validHeartRate);
 
     // setup wifi button to trigger interrupt
@@ -236,7 +229,7 @@ void loop()
                                            redLEDBuf,
                                            &spo2,
                                            &validSPO2,
-                                           &heartRateDummy,
+                                           &heartRate,
                                            &validHeartRate);
 
     // take reading for temperature
@@ -244,10 +237,7 @@ void loop()
 
 #ifdef DEBUG
     Serial.print(("Heart Rate True -> "));
-    Serial.println((heartRateDummy));
-
-    Serial.print(("Heart Rate Avg -> "));
-    Serial.println((heartRateAvg));
+    Serial.println((heartRate));
 
     Serial.print(("SPO2 -> "));
     Serial.println((spo2));
@@ -262,7 +252,7 @@ void loop()
     tft.fillScreen(TFT_WHITE);
 
     char hrB[10];
-    itoa(heartRateAvg, hrB, 10);
+    itoa(heartRate, hrB, 10);
 
     char oxiB[10];
     itoa(spo2, oxiB, 10);
@@ -302,7 +292,7 @@ void loop()
 
         firebaseTimer = millis();
 
-        Firebase.RTDB.setIntAsync(&FBDO, "mainData/heart_rate", heartRateDummy);
+        Firebase.RTDB.setIntAsync(&FBDO, "mainData/heart_rate", heartRate);
         sleep(.5);
         Firebase.RTDB.setIntAsync(&FBDO, "mainData/spo2", spo2);
         sleep(.5);
