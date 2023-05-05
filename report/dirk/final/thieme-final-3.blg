@@ -1,0 +1,15 @@
+[0] Config.pm:306> INFO - This is Biber 2.18
+[0] Config.pm:309> INFO - Logfile is 'thieme-final-3.blg'
+[119] biber-MSWIN64:340> INFO - === 
+[161] Biber.pm:418> INFO - Reading 'thieme-final-3.bcf'
+[273] Biber.pm:978> INFO - Found 16 citekeys in bib section 0
+[288] Biber.pm:4401> INFO - Processing section 0
+[301] Biber.pm:4592> INFO - Looking for bibtex file 'refs.bib' for section 0
+[365] bibtex.pm:1713> INFO - LaTeX decoding ...
+[381] bibtex.pm:1518> INFO - Found BibTeX data source 'refs.bib'
+[446] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[447] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[449] Biber.pm:4221> INFO - Sorting list 'anyt/global//global/global' of type 'entry' with template 'anyt' and locale 'en-US'
+[449] Biber.pm:4227> INFO - No sort tailoring available for locale 'en-US'
+[464] bbl.pm:654> INFO - Writing 'thieme-final-3.bbl' with encoding 'UTF-8'
+[468] bbl.pm:757> INFO - Output to thieme-final-3.bbl
