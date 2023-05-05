@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SPO2</title>
+  <title>Data Display</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,27 +13,35 @@
       padding: 20px;
       background-color: #fff;
       box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     h1 {
       text-align: center;
       margin-bottom: 30px;
     }
     .data-label {
-      font-size: 18px;
+      font-size: 24px;
       font-weight: bold;
       margin-bottom: 10px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #555;
     }
-    #data-display {
-      font-size: 36px;
+    .data-display {
+      font-size: 72px;
       text-align: center;
       margin-top: 10px;
+      color: #333;
     }
   </style>
 </head>
 <body>
 
   <div id="container">
-    <h1>SPO2</h1>
+    <h1>Vitals</h1>
 
     <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
     <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js"></script>
@@ -64,38 +72,38 @@
         var data = snapshot.val();
         if (data.length > 1) {
           var lastElement = data.pop();
-          document.getElementById('spo2-display').innerHTML = lastElement;
+          document.getElementById('spo2-display').innerHTML = lastElement+ " %";
         } else {
-          document.getElementById('spo2-display').innerHTML = data;
+          document.getElementById('spo2-display').innerHTML = data+ " %";
         }
       });
       ref2.on('value', function(snapshot) {
         var data2 = snapshot.val();
         if (data2.length > 1) {
           var lastElement = data2.pop();
-          document.getElementById('heart_rate-display').innerHTML = lastElement;
+          document.getElementById('heart_rate-display').innerHTML = lastElement+ " BPM";
         } else {
-          document.getElementById('heart_rate-display').innerHTML = data2;
+          document.getElementById('heart_rate-display').innerHTML = data2+ " BPM";
         }
       });
       ref3.on('value', function(snapshot) {
-        var data2 = snapshot.val();
-        if (data2.length > 1) {
-          var lastElement = data2.pop();
-          document.getElementById('temp-display').innerHTML = lastElement;
+        var data3 = snapshot.val();
+        if (data3.length > 1) {
+          var lastElement = data3.pop();
+          document.getElementById('temp-display').innerHTML = lastElement + " °F";
         } else {
-          document.getElementById('temp-display').innerHTML = data2;
+          document.getElementById('temp-display').innerHTML = data3 + " °F";
         }
       });
     </script>
-
-    <div class="spo2-label" id="spo2-label"></div>
+    <div class="data-label" id="spo2-label">SP02</div>
     <div id="spo2-display"></div>
-    <div class="heart_rate-label" id="heart_rate-label"></div>
+    
+    <div class="data-label" id="heart_rate-label">Heart Rate</div>
     <div id="heart_rate-display"></div>
-    <div class="" id="heart_rate-label"></div>
-    <div id="heart_rate-display"></div>
-    <!-- TODO: add temp stuff -->
+    
+    <div class="data-label" id="temp-label">Body Temperature</div>
+    <div id="temp-display"></div>
   </div>
 
 </body>

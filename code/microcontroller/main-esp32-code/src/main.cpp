@@ -26,7 +26,7 @@
 #define SCREEN_CONN // when no screen attached, disable screen function calls
 
 #define BUTTON 39        // pin connected to wifi connection button
-#define WIFI_TIMER 10000 // every 30 seconds, send wifi info
+#define WIFI_TIMER 2000 // every 30 seconds, send wifi info
 
 // define stuff to log in to firebase
 #define API_KEY "AIzaSyDrjThqfnejA6Lc12Lwnbxfnrqdf2X1TZ0"
@@ -101,7 +101,6 @@ void wifi_setup()
     // connect to the wifi using Wifi Manager
     WiFiManager wm;
     wm.setClass("invert");
-    wm.resetSettings(); // for now input wifi every time
     bool result = wm.autoConnect("LifeMTR");
 
 #ifdef DEBUG
@@ -134,7 +133,7 @@ void setup()
     Serial.begin(115200);
 #endif
 
-    /*------------------------------- FIREBASE SETUP ---------------------------------*/
+/*------------------------------- FIREBASE SETUP ---------------------------------*/
     config.api_key = API_KEY;
     config.database_url = DB_URL;
     config.token_status_callback = tokenStatusCallback;
@@ -142,13 +141,13 @@ void setup()
 /*------------------------------- SCREEN SETUP ---------------------------------*/
 #ifdef SCREEN_CONN
     tft.begin();
-    tft.setRotation(0);
+    tft.setRotation(2);
     tft.setSwapBytes(true);
     tft.fillScreen(TFT_WHITE);
     tft.pushImage(60, 60, 120, 120, LifeMTR);
 #endif
 
-    /*------------------------------- SENSOR SETUP ---------------------------------*/
+/*------------------------------- SENSOR SETUP ---------------------------------*/
     // initialize temp sensor
     tempSensor.begin();
 
