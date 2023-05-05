@@ -276,6 +276,23 @@ void loop()
     tft.print("TF:");
     tft.setCursor(115, 145);
     tft.print(tempB);
+
+    if (temperature < 97.5) {
+        for (int i = 0; i < 20; i++) {
+            tft.drawCircle(120, 120, 120 - (i * 2), TFT_BLUE);
+        }
+    }
+    else if (temperature > 100) {
+        for (int i = 0; i < 20; i++) {
+            tft.drawCircle(120, 120, 120 - (i * 2), TFT_RED);
+        }
+    }
+    else {
+        for (int i = 0; i < 20; i++) {
+            tft.drawCircle(120, 120, 120 - (i * 2), TFT_GREEN);
+        }
+    }
+
 #endif
 
     if (wifi_enabled && WiFi.status() != WL_CONNECTED)
